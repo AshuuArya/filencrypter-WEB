@@ -33,7 +33,7 @@ body {
     position: relative; /* Needed for corner brackets */
 }
 
-/* --- NEW: Decorative Corner Brackets --- */
+/* --- Decorative Corner Brackets --- */
 #app-container::before, #app-container::after {
     content: '';
     position: absolute;
@@ -122,7 +122,7 @@ header {
 .drop-zone-prompt span { color: #00ffff; font-weight: 700; }
 .drop-zone-icon { width: 3rem; height: 3rem; margin: 0 auto 1rem; color: #3a3a6a; transition: color 0.3s ease; }
 .file-drop-zone:hover .drop-zone-icon, .file-drop-zone.dragover .drop-zone-icon { color: #00ffff; }
-.file-name-display { margin-top: 0.5rem; font-weight: 700; color: #ffffff; min-height: 1.5rem; }
+.file-name-display { margin-top: 0.5rem; font-weight: 700; color: #ffffff; min-height: 1.5rem; word-break: break-all; }
 
 /* --- Input Fields --- */
 .input-group { margin-top: 1.5rem; }
@@ -154,3 +154,52 @@ header {
 
 /* Utility class from original HTML */
 .hidden { display: none; }
+
+/* --- NEW: Responsive Design for Mobile --- */
+@media (max-width: 640px) {
+    body {
+        padding: 0.5rem; /* Reduce body padding on small screens */
+        align-items: flex-start; /* Align container to the top */
+    }
+
+    #app-container {
+        padding: 1rem; /* Reduce container padding */
+        margin-top: 1rem; /* Add some top margin */
+    }
+
+    #app-title {
+        font-size: 1.75rem; /* Smaller title */
+    }
+
+    #app-subtitle {
+        font-size: 0.75rem; /* Smaller subtitle */
+        letter-spacing: 0.15em;
+    }
+
+    .tab-button {
+        font-size: 0.875rem; /* Smaller tab text */
+        padding: 0.75rem 0.1rem;
+    }
+
+    .file-drop-zone {
+        padding: 1.5rem; /* Smaller drop zone */
+    }
+
+    .drop-zone-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+    .drop-zone-prompt {
+        font-size: 0.875rem;
+    }
+    
+    .input-group label {
+        font-size: 0.875rem;
+    }
+
+    .action-button {
+        font-size: 1rem;
+        padding: 0.75rem 1rem;
+    }
+}
