@@ -1,29 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FileEncrypter - Cyber Edition</title>
-    <!-- Link to external CSS file -->
-    <link rel="stylesheet" href="style.css">
-    <!-- Link to external JavaScript libraries and Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <!-- Canvas for the dynamic background -->
-    <canvas id="particle-canvas"></canvas>
 
+<body>
     <div id="app-container">
         <header>
-            <!-- Title updated for glitch effect -->
             <h1 id="app-title" class="glitch" data-text="FILE_ENCRYPTER_">FILE_ENCRYPTER_</h1>
             <p id="app-subtitle">CLIENT-SIDE DATA FORTIFICATION PROTOCOL</p>
         </header>
 
-        <!-- Tabs -->
         <div id="tabs-container">
             <nav id="tabs-nav">
                 <button id="encrypt-tab-btn" class="tab-button active">ENCRYPT</button>
@@ -31,14 +26,14 @@
             </nav>
         </div>
 
-        <!-- Main Content -->
         <main>
-            <!-- Encryption Panel -->
             <div id="encrypt-panel">
                 <div id="encrypt-drop-zone" class="file-drop-zone">
                     <input type="file" id="encrypt-file-input" class="hidden">
                     <div class="drop-zone-prompt">
-                        <svg class="drop-zone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                        <svg class="drop-zone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" />
+                        </svg>
                         <p>DRAG & DROP FILE OR <span>CLICK TO SELECT</span></p>
                         <p id="encrypt-file-name" class="file-name-display"></p>
                     </div>
@@ -48,21 +43,27 @@
                     <label for="encrypt-password">PASSWORD_KEY</label>
                     <input type="password" id="encrypt-password" placeholder="ENTER A SECURE PASSPHRASE">
                 </div>
+                
+                <div class="input-group">
+                    <label for="encrypt-password-confirm">CONFIRM PASSWORD</label>
+                    <input type="password" id="encrypt-password-confirm" placeholder="RE-ENTER THE PASSPHRASE">
+                </div>
 
                 <button id="encrypt-btn" class="action-button" disabled>INITIATE ENCRYPTION</button>
             </div>
 
-            <!-- Decryption Panel -->
             <div id="decrypt-panel" class="hidden">
-                 <div id="decrypt-drop-zone" class="file-drop-zone">
+                <div id="decrypt-drop-zone" class="file-drop-zone">
                     <input type="file" id="decrypt-file-input" class="hidden">
                     <div class="drop-zone-prompt">
-                         <svg class="drop-zone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6-3.2c1.77 0 3.2 1.43 3.2 3.2V8H8.8V6.8c0-1.77 1.43-3.2 3.2-3.2z"/></svg>
+                        <svg class="drop-zone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6-3.2c1.77 0 3.2 1.43 3.2 3.2V8H8.8V6.8c0-1.77 1.43-3.2 3.2-3.2z" />
+                        </svg>
                         <p>DRAG & DROP ENCRYPTED FILE OR <span>CLICK TO SELECT</span></p>
                         <p id="decrypt-file-name" class="file-name-display"></p>
                     </div>
                 </div>
-                
+
                 <div class="input-group">
                     <label for="decrypt-password">PASSWORD_KEY</label>
                     <input type="password" id="decrypt-password" placeholder="ENTER DECRYPTION PASSPHRASE">
@@ -70,14 +71,11 @@
 
                 <button id="decrypt-btn" class="action-button" disabled>INITIATE DECRYPTION</button>
             </div>
-            
-             <!-- Status/Result Area -->
+
             <div id="status-area" class="mt-6 text-center"></div>
         </main>
-
     </div>
-
-    <!-- Link to external JavaScript file -->
     <script src="script.js"></script>
 </body>
+
 </html>
