@@ -15,7 +15,6 @@
 </head>
 
 <body>
-    <!-- The background is now handled entirely by CSS on the body element -->
     <div id="app-container">
         <header>
             <h1 id="app-title" class="glitch" data-text="FILE_ENCRYPTER_">FILE_ENCRYPTER_</h1>
@@ -50,7 +49,6 @@
                     <input type="password" id="encrypt-password" placeholder="ENTER A SECURE PASSPHRASE">
                 </div>
 
-                <!-- Added password confirmation for reliability -->
                 <div class="input-group">
                     <label for="encrypt-password-confirm">CONFIRM PASSWORD</label>
                     <input type="password" id="encrypt-password-confirm" placeholder="RE-ENTER THE PASSPHRASE">
@@ -62,7 +60,8 @@
             <!-- Decryption Panel -->
             <div id="decrypt-panel" class="hidden">
                 <div id="decrypt-drop-zone" class="file-drop-zone">
-                    <input type="file" id="decrypt-file-input" class="hidden">
+                    <!-- MODIFICATION: Added accept="*/*" to allow selecting any file on mobile -->
+                    <input type="file" id="decrypt-file-input" class="hidden" accept="*/*">
                     <div class="drop-zone-prompt">
                         <svg class="drop-zone-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6-3.2c1.77 0 3.2 1.43 3.2 3.2V8H8.8V6.8c0-1.77 1.43-3.2 3.2-3.2z" />
@@ -89,3 +88,4 @@
 </body>
 
 </html>
+
