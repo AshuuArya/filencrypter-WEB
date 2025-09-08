@@ -1,75 +1,110 @@
 /* --- Base and Font Setup --- */
 body {
     font-family: 'Chakra Petch', sans-serif;
-    color: #c1c1e0; /* Softer lavender text */
+    color: #c1c1e0;
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
     padding: 1rem;
-    background-color: #0a0a1f; /* Very dark navy blue */
-    overflow: hidden; /* Prevent scrollbars from canvas */
+    background-color: #000;
+    overflow: hidden;
+    position: relative;
 }
 
-/* --- Dynamic Particle Background --- */
-#particle-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1; /* Place it behind all content */
+/* --- NEW: Dynamic Matrix Rain Background --- */
+body::before {
+    content: "";
+    position: absolute;
+    inset: -150%;
+    z-index: -1;
+    rotate: -45deg;
+    background: #000;
+    --rain-color: #0f0; /* Classic green matrix color */
+    background-image:
+        radial-gradient(4px 100px at 0px 235px, var(--rain-color), #0000),
+        radial-gradient(4px 100px at 300px 235px, var(--rain-color), #0000),
+        radial-gradient(1.5px 1.5px at 150px 117.5px, var(--rain-color), #0000),
+        radial-gradient(4px 100px at 0px 252px, var(--rain-color), #0000),
+        radial-gradient(4px 100px at 300px 252px, var(--rain-color), #0000),
+        radial-gradient(1.5px 1.5px at 150px 126px, var(--rain-color), #0000),
+        radial-gradient(4px 100px at 0px 150px, var(--rain-color), #0000),
+        radial-gradient(4px 100px at 300px 150px, var(--rain-color), #0000),
+        radial-gradient(1.5px 1.5px at 150px 75px, var(--rain-color), #0000),
+        radial-gradient(4px 100px at 0px 253px, var(--rain-color), #0000),
+        radial-gradient(4px 100px at 300px 253px, var(--rain-color), #0000),
+        radial-gradient(1.5px 1.5px at 150px 126.5px, var(--rain-color), #0000),
+        radial-gradient(4px 100px at 0px 204px, var(--rain-color), #0000),
+        radial-gradient(4px 100px at 300px 204px, var(--rain-color), #0000),
+        radial-gradient(1.5px 1.5px at 150px 102px, var(--rain-color), #0000),
+        radial-gradient(4px 100px at 0px 210px, var(--rain-color), #0000),
+        radial-gradient(4px 100px at 300px 210px, var(--rain-color), #0000),
+        radial-gradient(1.5px 1.5px at 150px 105px, var(--rain-color), #0000);
+    background-size:
+        300px 235px, 300px 235px, 300px 235px,
+        300px 252px, 300px 252px, 300px 252px,
+        300px 150px, 300px 150px, 300px 150px,
+        300px 253px, 300px 253px, 300px 253px,
+        300px 204px, 300px 204px, 300px 204px,
+        300px 210px, 300px 210px, 300px 210px;
+    animation: rain-animation 150s linear infinite;
+    opacity: 0.3; /* Make it subtle */
 }
+
+@keyframes rain-animation {
+    0% {
+        background-position:
+            0px 220px, 3px 220px, 151.5px 337.5px,
+            25px 24px, 28px 24px, 176.5px 150px,
+            50px 16px, 53px 16px, 201.5px 91px,
+            75px 224px, 78px 224px, 226.5px 350.5px,
+            100px 19px, 103px 19px, 251.5px 121px,
+            275px 75px, 278px 75px, 426.5px 180px;
+    }
+    to {
+        background-position:
+            0px 6800px, 3px 6800px, 151.5px 6917.5px,
+            25px 13632px, 28px 13632px, 176.5px 13758px,
+            50px 5416px, 53px 5416px, 201.5px 5491px,
+            75px 17175px, 78px 17175px, 226.5px 17301.5px,
+            100px 5119px, 103px 5119px, 251.5px 5221px,
+            275px 6375px, 278px 6375px, 426.5px 6480px;
+    }
+}
+
 
 /* --- Main App Container --- */
 #app-container {
     width: 100%;
-    max-width: 42rem; /* 672px */
-    background-color: rgba(16, 16, 36, 0.75); /* Translucent dark navy */
+    max-width: 42rem;
+    background-color: rgba(16, 16, 36, 0.75);
     border: 1px solid #3a3a6a;
     box-shadow: 0 0 30px rgba(255, 0, 255, 0.2), 0 0 15px rgba(0, 255, 255, 0.2);
     backdrop-filter: blur(12px);
     padding: 2rem;
-    position: relative; /* Needed for corner brackets */
+    position: relative;
+    z-index: 1;
 }
 
 /* --- Decorative Corner Brackets --- */
-#app-container::before, #app-container::after {
+#app-container::before,
+#app-container::after {
     content: '';
     position: absolute;
     width: 25px;
     height: 25px;
-    border-color: #ff00ff; /* Magenta accent */
+    border-color: #ff00ff;
     border-style: solid;
     transition: all 0.3s ease;
 }
-#app-container::before {
-    top: -5px;
-    left: -5px;
-    border-width: 2px 0 0 2px;
-}
-#app-container::after {
-    bottom: -5px;
-    right: -5px;
-    border-width: 0 2px 2px 0;
-}
+
+#app-container::before { top: -5px; left: -5px; border-width: 2px 0 0 2px; }
+#app-container::after { bottom: -5px; right: -5px; border-width: 0 2px 2px 0; }
 
 /* --- Header and Glitch Title --- */
-header {
-    text-align: center;
-    margin-bottom: 1.5rem;
-}
-#app-title {
-    font-size: 2.25rem;
-    font-weight: 700;
-    color: #00ffff; /* Cyan */
-    letter-spacing: 0.1em;
-    text-shadow: 0 0 10px #00ffff;
-    position: relative;
-}
-.glitch {
-    position: relative;
-}
+header { text-align: center; margin-bottom: 1.5rem; }
+#app-title { font-size: 2.25rem; font-weight: 700; color: #00ffff; letter-spacing: 0.1em; text-shadow: 0 0 10px #00ffff; position: relative; }
+.glitch { position: relative; }
 .glitch::before, .glitch::after {
     content: attr(data-text);
     position: absolute;
@@ -81,42 +116,21 @@ header {
     overflow: hidden;
     clip: rect(0, 900px, 0, 0);
 }
-.glitch::before {
-    left: 2px;
-    text-shadow: -2px 0 #ff00ff;
-    animation: glitch-anim-1 2s infinite linear alternate-reverse;
-}
-.glitch::after {
-    left: -2px;
-    text-shadow: -2px 0 #00ffff, 2px 2px #ff00ff;
-    animation: glitch-anim-2 3s infinite linear alternate-reverse;
-}
+.glitch::before { left: 2px; text-shadow: -2px 0 #ff00ff; animation: glitch-anim-1 2s infinite linear alternate-reverse; }
+.glitch::after { left: -2px; text-shadow: -2px 0 #00ffff, 2px 2px #ff00ff; animation: glitch-anim-2 3s infinite linear alternate-reverse; }
 @keyframes glitch-anim-1 { 0% { clip: rect(42px, 9999px, 44px, 0); } 100% { clip: rect(2px, 9999px, 92px, 0); } }
 @keyframes glitch-anim-2 { 0% { clip: rect(12px, 9999px, 60px, 0); } 100% { clip: rect(40px, 9999px, 12px, 0); } }
-
-#app-subtitle {
-    font-size: 0.875rem;
-    color: #f0f0ff;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-}
+#app-subtitle { font-size: 0.875rem; color: #f0f0ff; letter-spacing: 0.2em; text-transform: uppercase; }
 
 /* --- Tabs --- */
 #tabs-container { margin-bottom: 1.5rem; border-bottom: 1px solid #3a3a6a; }
 #tabs-nav { display: flex; }
-.tab-button {
-    flex: 1; padding: 1rem 0.25rem; text-align: center; font-weight: 700; font-size: 1rem;
-    letter-spacing: 0.1em; background-color: transparent; color: #a0a0c0; border: none;
-    border-bottom: 3px solid transparent; cursor: pointer; transition: all 0.3s ease;
-}
+.tab-button { flex: 1; padding: 1rem 0.25rem; text-align: center; font-weight: 700; font-size: 1rem; letter-spacing: 0.1em; background-color: transparent; color: #a0a0c0; border: none; border-bottom: 3px solid transparent; cursor: pointer; transition: all 0.3s ease; }
 .tab-button:hover { color: #ffffff; background-color: rgba(0, 255, 255, 0.1); }
 .tab-button.active { color: #00ffff; border-bottom-color: #00ffff; }
 
 /* --- File Drop Zone --- */
-.file-drop-zone {
-    border: 2px dashed #3a3a6a; background-color: rgba(10, 10, 31, 0.7);
-    padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease;
-}
+.file-drop-zone { border: 2px dashed #3a3a6a; background-color: rgba(10, 10, 31, 0.7); padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; }
 .file-drop-zone:hover, .file-drop-zone.dragover { border-color: #00ffff; background-color: rgba(0, 255, 255, 0.1); }
 .drop-zone-prompt { color: #a0a0c0; font-weight: 500; }
 .drop-zone-prompt span { color: #00ffff; font-weight: 700; }
@@ -127,23 +141,17 @@ header {
 /* --- Input Fields --- */
 .input-group { margin-top: 1.5rem; }
 .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 700; letter-spacing: 0.1em; color: #f0f0ff; }
-.input-group input {
-    width: 100%; background-color: #0a0a1f; border: 1px solid #3a3a6a; color: #f0f0ff;
-    padding: 0.75rem 1rem; font-family: 'Chakra Petch', sans-serif; font-size: 1rem; transition: all 0.3s ease;
-}
+.input-group input { width: 100%; background-color: #0a0a1f; border: 1px solid #3a3a6a; color: #f0f0ff; padding: 0.75rem 1rem; font-family: 'Chakra Petch', sans-serif; font-size: 1rem; transition: all 0.3s ease; border-radius: 0.25rem; }
 .input-group input:focus { outline: none; border-color: #00ffff; box-shadow: 0 0 10px rgba(0, 255, 255, 0.5); }
 
 /* --- Action Button --- */
-.action-button {
-    width: 100%; margin-top: 1.5rem; background-color: transparent; color: #00ffff; font-weight: 700;
-    font-size: 1.125rem; letter-spacing: 0.1em; padding: 0.8rem 1rem; border: 2px solid #00ffff;
-    cursor: pointer; transition: all 0.3s ease; position: relative;
-}
+.action-button { width: 100%; margin-top: 1.5rem; background-color: transparent; color: #00ffff; font-weight: 700; font-size: 1.125rem; letter-spacing: 0.1em; padding: 0.8rem 1rem; border: 2px solid #00ffff; cursor: pointer; transition: all 0.3s ease; position: relative; }
 .action-button:hover:not(:disabled) { background-color: #00ffff; color: #0a0a1f; box-shadow: 0 0 20px #00ffff; }
 .action-button:disabled { border-color: #3a3a6a; color: #5a5a8a; cursor: not-allowed; }
 
 /* --- Status/Result Area --- */
-#status-area .loader { border-color: #3a3a6a; border-top-color: #00ffff; }
+.loader { border: 4px solid #3a3a6a; border-top: 4px solid #00ffff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 #status-area .bg-green-100 { background-color: rgba(0, 255, 127, 0.1); }
 #status-area .border-green-500 { border-color: #00ff7f; }
 #status-area .text-green-700 { color: #c0ffdf; }
@@ -155,51 +163,16 @@ header {
 /* Utility class from original HTML */
 .hidden { display: none; }
 
-/* --- NEW: Responsive Design for Mobile --- */
+/* --- Responsive Design for Mobile --- */
 @media (max-width: 640px) {
-    body {
-        padding: 0.5rem; /* Reduce body padding on small screens */
-        align-items: flex-start; /* Align container to the top */
-    }
-
-    #app-container {
-        padding: 1rem; /* Reduce container padding */
-        margin-top: 1rem; /* Add some top margin */
-    }
-
-    #app-title {
-        font-size: 1.75rem; /* Smaller title */
-    }
-
-    #app-subtitle {
-        font-size: 0.75rem; /* Smaller subtitle */
-        letter-spacing: 0.15em;
-    }
-
-    .tab-button {
-        font-size: 0.875rem; /* Smaller tab text */
-        padding: 0.75rem 0.1rem;
-    }
-
-    .file-drop-zone {
-        padding: 1.5rem; /* Smaller drop zone */
-    }
-
-    .drop-zone-icon {
-        width: 2.5rem;
-        height: 2.5rem;
-    }
-
-    .drop-zone-prompt {
-        font-size: 0.875rem;
-    }
-    
-    .input-group label {
-        font-size: 0.875rem;
-    }
-
-    .action-button {
-        font-size: 1rem;
-        padding: 0.75rem 1rem;
-    }
+    body { padding: 0.5rem; align-items: flex-start; }
+    #app-container { padding: 1rem; margin-top: 1rem; }
+    #app-title { font-size: 1.75rem; }
+    #app-subtitle { font-size: 0.75rem; letter-spacing: 0.15em; }
+    .tab-button { font-size: 0.875rem; padding: 0.75rem 0.1rem; }
+    .file-drop-zone { padding: 1.5rem; }
+    .drop-zone-icon { width: 2.5rem; height: 2.5rem; }
+    .drop-zone-prompt { font-size: 0.875rem; }
+    .input-group label { font-size: 0.875rem; }
+    .action-button { font-size: 1rem; padding: 0.75rem 1rem; }
 }
