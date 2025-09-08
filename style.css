@@ -7,71 +7,20 @@ body {
     justify-content: center;
     min-height: 100vh;
     padding: 1rem;
-    background-color: #000;
     overflow: hidden;
     position: relative;
+    /* MODIFICATION: Replaced performance-heavy animation with a lightweight, smooth gradient animation */
+    background: linear-gradient(45deg, #0a0a1f, #10102a, #0a0a1f, #2a1a3a);
+    background-size: 300% 300%;
+    animation: gradient-bg 25s ease infinite;
 }
 
-/* --- NEW: Dynamic Matrix Rain Background --- */
-body::before {
-    content: "";
-    position: absolute;
-    inset: -150%;
-    z-index: -1;
-    rotate: -45deg;
-    background: #000;
-    --rain-color: #0f0; /* Classic green matrix color */
-    background-image:
-        radial-gradient(4px 100px at 0px 235px, var(--rain-color), #0000),
-        radial-gradient(4px 100px at 300px 235px, var(--rain-color), #0000),
-        radial-gradient(1.5px 1.5px at 150px 117.5px, var(--rain-color), #0000),
-        radial-gradient(4px 100px at 0px 252px, var(--rain-color), #0000),
-        radial-gradient(4px 100px at 300px 252px, var(--rain-color), #0000),
-        radial-gradient(1.5px 1.5px at 150px 126px, var(--rain-color), #0000),
-        radial-gradient(4px 100px at 0px 150px, var(--rain-color), #0000),
-        radial-gradient(4px 100px at 300px 150px, var(--rain-color), #0000),
-        radial-gradient(1.5px 1.5px at 150px 75px, var(--rain-color), #0000),
-        radial-gradient(4px 100px at 0px 253px, var(--rain-color), #0000),
-        radial-gradient(4px 100px at 300px 253px, var(--rain-color), #0000),
-        radial-gradient(1.5px 1.5px at 150px 126.5px, var(--rain-color), #0000),
-        radial-gradient(4px 100px at 0px 204px, var(--rain-color), #0000),
-        radial-gradient(4px 100px at 300px 204px, var(--rain-color), #0000),
-        radial-gradient(1.5px 1.5px at 150px 102px, var(--rain-color), #0000),
-        radial-gradient(4px 100px at 0px 210px, var(--rain-color), #0000),
-        radial-gradient(4px 100px at 300px 210px, var(--rain-color), #0000),
-        radial-gradient(1.5px 1.5px at 150px 105px, var(--rain-color), #0000);
-    background-size:
-        300px 235px, 300px 235px, 300px 235px,
-        300px 252px, 300px 252px, 300px 252px,
-        300px 150px, 300px 150px, 300px 150px,
-        300px 253px, 300px 253px, 300px 253px,
-        300px 204px, 300px 204px, 300px 204px,
-        300px 210px, 300px 210px, 300px 210px;
-    animation: rain-animation 150s linear infinite;
-    opacity: 0.3; /* Make it subtle */
+/* MODIFICATION: Keyframes for the new smooth background */
+@keyframes gradient-bg {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
-
-@keyframes rain-animation {
-    0% {
-        background-position:
-            0px 220px, 3px 220px, 151.5px 337.5px,
-            25px 24px, 28px 24px, 176.5px 150px,
-            50px 16px, 53px 16px, 201.5px 91px,
-            75px 224px, 78px 224px, 226.5px 350.5px,
-            100px 19px, 103px 19px, 251.5px 121px,
-            275px 75px, 278px 75px, 426.5px 180px;
-    }
-    to {
-        background-position:
-            0px 6800px, 3px 6800px, 151.5px 6917.5px,
-            25px 13632px, 28px 13632px, 176.5px 13758px,
-            50px 5416px, 53px 5416px, 201.5px 5491px,
-            75px 17175px, 78px 17175px, 226.5px 17301.5px,
-            100px 5119px, 103px 5119px, 251.5px 5221px,
-            275px 6375px, 278px 6375px, 426.5px 6480px;
-    }
-}
-
 
 /* --- Main App Container --- */
 #app-container {
@@ -81,6 +30,7 @@ body::before {
     border: 1px solid #3a3a6a;
     box-shadow: 0 0 30px rgba(255, 0, 255, 0.2), 0 0 15px rgba(0, 255, 255, 0.2);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); /* Safari support */
     padding: 2rem;
     position: relative;
     z-index: 1;
@@ -176,3 +126,4 @@ header { text-align: center; margin-bottom: 1.5rem; }
     .input-group label { font-size: 0.875rem; }
     .action-button { font-size: 1rem; padding: 0.75rem 1rem; }
 }
+
