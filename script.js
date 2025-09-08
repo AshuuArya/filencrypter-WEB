@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let encryptFile = null;
     let decryptFile = null;
 
-    // --- Fun aliases for encrypted filenames ---
     const funAliases = [
         'IronMan', 'CaptainAmerica', 'Thor', 'Hulk', 'BlackWidow', 'Hawkeye',
         'SpiderMan', 'Wolverine', 'Deadpool', 'WonderWoman', 'Superman', 'Batman',
@@ -34,12 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return funAliases[randomIndex];
     }
 
-    // --- Crypto Constants ---
-    const SALT_SIZE = 16; // 128 bits
-    const IV_SIZE = 12; // 96 bits for GCM
-    const PBKDF2_ITERATIONS = 310000; // OWASP recommendation
+    const SALT_SIZE = 16;
+    const IV_SIZE = 12;
+    const PBKDF2_ITERATIONS = 310000;
 
-    // --- UI Logic ---
     encryptTabBtn.addEventListener('click', () => switchTab('encrypt'));
     decryptTabBtn.addEventListener('click', () => switchTab('decrypt'));
 
@@ -101,7 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
     encryptBtn.addEventListener('click', handleEncrypt);
     decryptBtn.addEventListener('click', handleDecrypt);
 
-    // --- Core Logic ---
     async function handleEncrypt() {
         if (!encryptFile) {
             showError('Please select a file to encrypt.');
@@ -125,9 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fileBuffer = await encryptFile.arrayBuffer();
             const encryptedBlob = await encryptWithPassword(fileBuffer, password, encryptFile.name);
             showSuccess('File encrypted successfully! Your download should begin automatically.');
-            
             const encryptedFilename = getRandomAlias() + '.encrypted';
-
             createDownloadLink(encryptedBlob, encryptedFilename, 'Encrypted File');
         } catch (error) {
             console.error('Encryption error:', error);
@@ -151,26 +145,21 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const encryptedBuffer = await decryptFile.arrayBuffer();
             const { decryptedData, originalFilename } = await decryptWithPassword(encryptedBuffer, password);
-
-            const decryptedBlob = new Blob([decryptedData]);
+            // MODIFICATION: Set MIME type for the decrypted blob as well for consistency.
+            const decryptedBlob = new Blob([decryptedData], { type: 'application/octet-stream' });
             showSuccess('File decrypted successfully! Your download should begin automatically.');
             createDownloadLink(decryptedBlob, originalFilename, 'Decrypted File');
-
         } catch (error) {
             console.error('Decryption error:', error);
             showError(`Decryption failed. Check password or file integrity. Error: ${error.message}`);
         }
     }
 
-    // --- Cryptographic Functions ---
     async function getKeyFromPassword(password, salt) {
         const enc = new TextEncoder();
         const keyMaterial = await window.crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']);
         return window.crypto.subtle.deriveKey({
-            name: 'PBKDF2',
-            salt: salt,
-            iterations: PBKDF2_ITERATIONS,
-            hash: 'SHA-256'
+            name: 'PBKDF2', salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256'
         }, keyMaterial, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
     }
 
@@ -178,24 +167,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const salt = window.crypto.getRandomValues(new Uint8Array(SALT_SIZE));
         const iv = window.crypto.getRandomValues(new Uint8Array(IV_SIZE));
         const key = await getKeyFromPassword(password, salt);
-
         const filenameBytes = new TextEncoder().encode(originalFilename);
         const filenameLengthBuffer = new ArrayBuffer(2);
         new DataView(filenameLengthBuffer).setUint16(0, filenameBytes.length, false);
-
         const plaintext = new Uint8Array(2 + filenameBytes.length + data.byteLength);
         plaintext.set(new Uint8Array(filenameLengthBuffer), 0);
         plaintext.set(filenameBytes, 2);
         plaintext.set(new Uint8Array(data), 2 + filenameBytes.length);
-
-        const encryptedContent = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, plaintext);
-
+        const encryptedContent = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext);
         const result = new Uint8Array(SALT_SIZE + IV_SIZE + encryptedContent.byteLength);
         result.set(salt, 0);
         result.set(iv, SALT_SIZE);
         result.set(new Uint8Array(encryptedContent), SALT_SIZE + IV_SIZE);
-
-        return new Blob([result]);
+        // MODIFICATION: Set MIME type to application/octet-stream to prevent mobile browsers from adding .txt
+        return new Blob([result], { type: 'application/octet-stream' });
     }
 
     async function decryptWithPassword(encryptedData, password) {
@@ -203,24 +188,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const salt = encryptedBytes.slice(0, SALT_SIZE);
         const iv = encryptedBytes.slice(SALT_SIZE, SALT_SIZE + IV_SIZE);
         const data = encryptedBytes.slice(SALT_SIZE + IV_SIZE);
-
         const key = await getKeyFromPassword(password, salt);
-        const decryptedPayload = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, data);
-        
+        const decryptedPayload = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
         const decryptedBytes = new Uint8Array(decryptedPayload);
         const filenameLength = new DataView(decryptedBytes.buffer, 0, 2).getUint16(0, false);
         const filenameBytes = decryptedBytes.slice(2, 2 + filenameLength);
         const originalFilename = new TextDecoder().decode(filenameBytes);
-        
-        // BUG FIX: The slice method on a TypedArray creates a *view* on the original buffer.
-        // We need to create a new buffer that contains only the file data.
-        // The original code was returning the entire buffer, including the filename data.
         const originalFileBytes = decryptedBytes.slice(2 + filenameLength);
-
         return { decryptedData: originalFileBytes, originalFilename };
     }
 
-    // --- UI Helper Functions ---
     function showLoading(message) {
         statusArea.innerHTML = `<div class="flex flex-col items-center justify-center"><div class="loader mb-2"></div><p>${message}</p></div>`;
     }
@@ -238,13 +215,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const link = document.createElement('a');
         link.href = url;
         link.download = fileName;
-
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
         setTimeout(() => URL.revokeObjectURL(url), 100);
-
         let container = document.getElementById('download-links');
         if (!container) {
             container = document.createElement('div');
@@ -257,8 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadAgainLink.download = fileName;
         downloadAgainLink.textContent = `Download ${label} Again`;
         downloadAgainLink.className = 'block w-full text-center mt-2 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500';
-
-        container.innerHTML = ''; 
+        container.innerHTML = '';
         container.appendChild(downloadAgainLink);
     }
 
