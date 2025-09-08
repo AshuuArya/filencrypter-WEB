@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FileEncrypter - Cyber Edition</title>
+    <!-- Using Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;700&display=swap" rel="stylesheet">
@@ -13,12 +15,14 @@
 </head>
 
 <body>
+    <!-- The background is now handled entirely by CSS on the body element -->
     <div id="app-container">
         <header>
             <h1 id="app-title" class="glitch" data-text="FILE_ENCRYPTER_">FILE_ENCRYPTER_</h1>
             <p id="app-subtitle">CLIENT-SIDE DATA FORTIFICATION PROTOCOL</p>
         </header>
 
+        <!-- Tabs -->
         <div id="tabs-container">
             <nav id="tabs-nav">
                 <button id="encrypt-tab-btn" class="tab-button active">ENCRYPT</button>
@@ -26,7 +30,9 @@
             </nav>
         </div>
 
+        <!-- Main Content -->
         <main>
+            <!-- Encryption Panel -->
             <div id="encrypt-panel">
                 <div id="encrypt-drop-zone" class="file-drop-zone">
                     <input type="file" id="encrypt-file-input" class="hidden">
@@ -43,7 +49,8 @@
                     <label for="encrypt-password">PASSWORD_KEY</label>
                     <input type="password" id="encrypt-password" placeholder="ENTER A SECURE PASSPHRASE">
                 </div>
-                
+
+                <!-- Added password confirmation for reliability -->
                 <div class="input-group">
                     <label for="encrypt-password-confirm">CONFIRM PASSWORD</label>
                     <input type="password" id="encrypt-password-confirm" placeholder="RE-ENTER THE PASSPHRASE">
@@ -52,6 +59,7 @@
                 <button id="encrypt-btn" class="action-button" disabled>INITIATE ENCRYPTION</button>
             </div>
 
+            <!-- Decryption Panel -->
             <div id="decrypt-panel" class="hidden">
                 <div id="decrypt-drop-zone" class="file-drop-zone">
                     <input type="file" id="decrypt-file-input" class="hidden">
@@ -72,9 +80,11 @@
                 <button id="decrypt-btn" class="action-button" disabled>INITIATE DECRYPTION</button>
             </div>
 
+            <!-- Status/Result Area -->
             <div id="status-area" class="mt-6 text-center"></div>
         </main>
     </div>
+    <!-- Link to external JavaScript file -->
     <script src="script.js"></script>
 </body>
 
