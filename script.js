@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let encryptFile = null;
     let decryptFile = null;
 
-    // --- NEW: Fun aliases for encrypted filenames ---
+    // --- Fun aliases for encrypted filenames ---
     const funAliases = [
         'IronMan', 'CaptainAmerica', 'Thor', 'Hulk', 'BlackWidow', 'Hawkeye',
         'SpiderMan', 'Wolverine', 'Deadpool', 'WonderWoman', 'Superman', 'Batman',
@@ -126,7 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const encryptedBlob = await encryptWithPassword(fileBuffer, password, encryptFile.name);
             showSuccess('File encrypted successfully! Your download should begin automatically.');
             
-            // NEW: Use a fun alias for the filename
             const encryptedFilename = getRandomAlias() + '.encrypted';
 
             createDownloadLink(encryptedBlob, encryptedFilename, 'Encrypted File');
@@ -151,11 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const encryptedBuffer = await decryptFile.arrayBuffer();
-            const { decryptedBuffer, originalFilename } = await decryptWithPassword(encryptedBuffer, password);
+            const { decryptedData, originalFilename } = await decryptWithPassword(encryptedBuffer, password);
 
-            const decryptedBlob = new Blob([decryptedBuffer]);
+            const decryptedBlob = new Blob([decryptedData]);
             showSuccess('File decrypted successfully! Your download should begin automatically.');
-            // The original filename is restored automatically from the encrypted payload
             createDownloadLink(decryptedBlob, originalFilename, 'Decrypted File');
 
         } catch (error) {
@@ -176,12 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, keyMaterial, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
     }
 
-    /**
-     * Encrypts data with a password.
-     * The original filename is now part of the encrypted payload.
-     * File format: [16-byte salt][12-byte IV][encrypted data]
-     * Encrypted data format: [2-byte filename length][filename][file content]
-     */
     async function encryptWithPassword(data, password, originalFilename) {
         const salt = window.crypto.getRandomValues(new Uint8Array(SALT_SIZE));
         const iv = window.crypto.getRandomValues(new Uint8Array(IV_SIZE));
@@ -189,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const filenameBytes = new TextEncoder().encode(originalFilename);
         const filenameLengthBuffer = new ArrayBuffer(2);
-        new DataView(filenameLengthBuffer).setUint16(0, filenameBytes.length, false); // Big-endian
+        new DataView(filenameLengthBuffer).setUint16(0, filenameBytes.length, false);
 
         const plaintext = new Uint8Array(2 + filenameBytes.length + data.byteLength);
         plaintext.set(new Uint8Array(filenameLengthBuffer), 0);
@@ -206,26 +198,26 @@ document.addEventListener('DOMContentLoaded', () => {
         return new Blob([result]);
     }
 
-    /**
-     * Decrypts data with a password, extracting the original filename.
-     */
     async function decryptWithPassword(encryptedData, password) {
         const encryptedBytes = new Uint8Array(encryptedData);
-
         const salt = encryptedBytes.slice(0, SALT_SIZE);
         const iv = encryptedBytes.slice(SALT_SIZE, SALT_SIZE + IV_SIZE);
         const data = encryptedBytes.slice(SALT_SIZE + IV_SIZE);
 
         const key = await getKeyFromPassword(password, salt);
-        const decryptedBuffer = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, data);
-        const decryptedBytes = new Uint8Array(decryptedBuffer);
-
+        const decryptedPayload = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, data);
+        
+        const decryptedBytes = new Uint8Array(decryptedPayload);
         const filenameLength = new DataView(decryptedBytes.buffer, 0, 2).getUint16(0, false);
         const filenameBytes = decryptedBytes.slice(2, 2 + filenameLength);
         const originalFilename = new TextDecoder().decode(filenameBytes);
-        const originalFileBuffer = decryptedBytes.slice(2 + filenameLength).buffer;
+        
+        // BUG FIX: The slice method on a TypedArray creates a *view* on the original buffer.
+        // We need to create a new buffer that contains only the file data.
+        // The original code was returning the entire buffer, including the filename data.
+        const originalFileBytes = decryptedBytes.slice(2 + filenameLength);
 
-        return { decryptedBuffer, originalFilename };
+        return { decryptedData: originalFileBytes, originalFilename };
     }
 
     // --- UI Helper Functions ---
@@ -274,3 +266,4 @@ document.addEventListener('DOMContentLoaded', () => {
         statusArea.innerHTML = '';
     }
 });
+
