@@ -4,35 +4,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const decryptTabBtn = document.getElementById('decrypt-tab-btn');
     const encryptPanel = document.getElementById('encrypt-panel');
     const decryptPanel = document.getElementById('decrypt-panel');
-
-    // Encrypt Panel Elements
     const encryptDropZone = document.getElementById('encrypt-drop-zone');
     const encryptFileInput = document.getElementById('encrypt-file-input');
     const encryptFileName = document.getElementById('encrypt-file-name');
     const encryptBtn = document.getElementById('encrypt-btn');
     const encryptPasswordInput = document.getElementById('encrypt-password');
-
-    // Decrypt Panel Elements
+    // MODIFICATION: Get the new password confirmation element
+    const encryptPasswordConfirmInput = document.getElementById('encrypt-password-confirm');
     const decryptDropZone = document.getElementById('decrypt-drop-zone');
     const decryptFileInput = document.getElementById('decrypt-file-input');
     const decryptFileName = document.getElementById('decrypt-file-name');
     const decryptBtn = document.getElementById('decrypt-btn');
     const decryptPasswordInput = document.getElementById('decrypt-password');
-
-    // Status Area
     const statusArea = document.getElementById('status-area');
-    
+
     let encryptFile = null;
     let decryptFile = null;
 
-    // --- Crypto Constants (matching the desktop app for compatibility) ---
-    const SALT_SIZE = 16;       // 128 bits
-    const IV_SIZE = 12;         // 96 bits for GCM
-    const PBKDF2_ITERATIONS = 600000; // High iteration count for security
+    // --- Crypto Constants ---
+    const SALT_SIZE = 16; // 128 bits
+    const IV_SIZE = 12; // 96 bits for GCM
+    const PBKDF2_ITERATIONS = 310000; // OWASP recommendation
 
     // --- UI Logic ---
-
-    // Tab switching
     encryptTabBtn.addEventListener('click', () => switchTab('encrypt'));
     decryptTabBtn.addEventListener('click', () => switchTab('decrypt'));
 
@@ -50,8 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         clearStatus();
     }
-    
-    // --- File Handling & Drag/Drop ---
+
     function setupDropZone(zone, input, fileVarSetter, nameDisplay, buttonValidator) {
         zone.addEventListener('click', () => input.click());
         zone.addEventListener('dragover', (e) => {
@@ -82,21 +75,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    setupDropZone(encryptDropZone, encryptFileInput, (f) => { encryptFile = f; }, encryptFileName, validateEncryptButton);
-    setupDropZone(decryptDropZone, decryptFileInput, (f) => { decryptFile = f; }, decryptFileName, validateDecryptButton);
-    
+    setupDropZone(encryptDropZone, encryptFileInput, (f) => {
+        encryptFile = f;
+    }, encryptFileName, validateEncryptButton);
+    setupDropZone(decryptDropZone, decryptFileInput, (f) => {
+        decryptFile = f;
+    }, decryptFileName, validateDecryptButton);
+
     encryptPasswordInput.addEventListener('input', validateEncryptButton);
+    // MODIFICATION: Add event listener to the confirmation input
+    encryptPasswordConfirmInput.addEventListener('input', validateEncryptButton);
     decryptPasswordInput.addEventListener('input', validateDecryptButton);
 
+    // MODIFICATION: Update validation logic to check if passwords match
     function validateEncryptButton() {
-        encryptBtn.disabled = !(encryptFile && encryptPasswordInput.value.length > 0);
+        const passwordsMatch = encryptPasswordInput.value === encryptPasswordConfirmInput.value;
+        encryptBtn.disabled = !(encryptFile && encryptPasswordInput.value.length > 0 && passwordsMatch);
     }
 
     function validateDecryptButton() {
         decryptBtn.disabled = !(decryptFile && decryptPasswordInput.value.length > 0);
     }
 
-    // --- Button Click Handlers ---
     encryptBtn.addEventListener('click', handleEncrypt);
     decryptBtn.addEventListener('click', handleDecrypt);
 
@@ -107,18 +107,31 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const password = encryptPasswordInput.value;
+        // MODIFICATION: Get confirmation password value
+        const passwordConfirm = encryptPasswordConfirmInput.value;
+
         if (password.length < 8) {
             showError('Password must be at least 8 characters long.');
             return;
         }
+        
+        // MODIFICATION: Add explicit check for password match before encrypting
+        if (password !== passwordConfirm) {
+            showError('Passwords do not match. Please re-enter.');
+            return;
+        }
 
         showLoading('Encrypting file...');
-        
+
         try {
             const fileBuffer = await encryptFile.arrayBuffer();
             const encryptedBlob = await encryptWithPassword(fileBuffer, password, encryptFile.name);
             showSuccess('File encrypted successfully! Your download should begin automatically.');
-            createDownloadLink(encryptedBlob, `${encryptFile.name}.encrypted`, 'Encrypted File');
+
+            const originalName = encryptFile.name;
+            const encryptedFilename = originalName + '.encrypted';
+
+            createDownloadLink(encryptedBlob, encryptedFilename, 'Encrypted File');
         } catch (error) {
             console.error('Encryption error:', error);
             showError(`An error occurred during encryption: ${error.message}`);
@@ -126,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleDecrypt() {
-         if (!decryptFile) {
+        if (!decryptFile) {
             showError('Please select a file to decrypt.');
             return;
         }
@@ -140,75 +153,128 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const encryptedBuffer = await decryptFile.arrayBuffer();
-            const { decryptedBuffer, originalFilename } = await decryptWithPassword(encryptedBuffer, password);
-            
+            const {
+                decryptedBuffer,
+                originalFilename
+            } = await decryptWithPassword(encryptedBuffer, password);
+
             const decryptedBlob = new Blob([decryptedBuffer]);
             showSuccess('File decrypted successfully! Your download should begin automatically.');
             createDownloadLink(decryptedBlob, originalFilename, 'Decrypted File');
 
         } catch (error) {
             console.error('Decryption error:', error);
-            showError(`Decryption failed. Please check your password and file integrity. Details: ${error.message}`);
+            showError(`Decryption failed. Check password or file integrity. Error: ${error.message}`);
         }
     }
 
-    // --- Cryptographic Functions (using Web Crypto API) ---
+    // --- Cryptographic Functions ---
     async function getKeyFromPassword(password, salt) {
         const enc = new TextEncoder();
-        const keyMaterial = await window.crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']);
-        return window.crypto.subtle.deriveKey({ name: 'PBKDF2', salt: salt, iterations: PBKDF2_ITERATIONS, hash: 'SHA-256' }, keyMaterial, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+        const keyMaterial = await window.crypto.subtle.importKey('raw', enc.encode(password), {
+            name: 'PBKDF2'
+        }, false, ['deriveKey']);
+        return window.crypto.subtle.deriveKey({
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: PBKDF2_ITERATIONS,
+            hash: 'SHA-256'
+        }, keyMaterial, {
+            name: 'AES-GCM',
+            length: 256
+        }, true, ['encrypt', 'decrypt']);
     }
-    
+
+    /**
+     * Encrypts data with a password.
+     * The original filename is now part of the encrypted payload.
+     * File format: [16-byte salt][12-byte IV][encrypted data]
+     * Encrypted data format: [2-byte filename length][filename][file content]
+     */
     async function encryptWithPassword(data, password, originalFilename) {
         const salt = window.crypto.getRandomValues(new Uint8Array(SALT_SIZE));
-        const key = await getKeyFromPassword(password, salt);
         const iv = window.crypto.getRandomValues(new Uint8Array(IV_SIZE));
+        const key = await getKeyFromPassword(password, salt);
+
         const filenameBytes = new TextEncoder().encode(originalFilename);
         const filenameLengthBuffer = new ArrayBuffer(2);
-        new DataView(filenameLengthBuffer).setUint16(0, filenameBytes.length, false);
-        const encryptedContent = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, data);
-        const encryptedBytes = new Uint8Array(encryptedContent);
-        const result = new Uint8Array(SALT_SIZE + IV_SIZE + 2 + filenameBytes.length + encryptedBytes.length);
-        let offset = 0;
-        result.set(salt, offset); offset += salt.length;
-        result.set(iv, offset); offset += iv.length;
-        result.set(new Uint8Array(filenameLengthBuffer), offset); offset += 2;
-        result.set(filenameBytes, offset); offset += filenameBytes.length;
-        result.set(encryptedBytes, offset);
+        new DataView(filenameLengthBuffer).setUint16(0, filenameBytes.length, false); // Big-endian
+
+        const plaintext = new Uint8Array(2 + filenameBytes.length + data.byteLength);
+        plaintext.set(new Uint8Array(filenameLengthBuffer), 0);
+        plaintext.set(filenameBytes, 2);
+        plaintext.set(new Uint8Array(data), 2 + filenameBytes.length);
+
+        const encryptedContent = await window.crypto.subtle.encrypt({
+            name: 'AES-GCM',
+            iv: iv
+        }, key, plaintext);
+
+        const result = new Uint8Array(SALT_SIZE + IV_SIZE + encryptedContent.byteLength);
+        result.set(salt, 0);
+        result.set(iv, SALT_SIZE);
+        result.set(new Uint8Array(encryptedContent), SALT_SIZE + IV_SIZE);
+
         return new Blob([result]);
     }
 
+    /**
+     * Decrypts data with a password, extracting the original filename.
+     */
     async function decryptWithPassword(encryptedData, password) {
         const encryptedBytes = new Uint8Array(encryptedData);
-        let offset = 0;
-        const salt = encryptedBytes.slice(offset, offset + SALT_SIZE); offset += SALT_SIZE;
-        const iv = encryptedBytes.slice(offset, offset + IV_SIZE); offset += IV_SIZE;
-        const filenameLength = new DataView(encryptedBytes.buffer, offset, 2).getUint16(0, false); offset += 2;
-        const filenameBytes = encryptedBytes.slice(offset, offset + filenameLength);
-        const originalFilename = new TextDecoder().decode(filenameBytes); offset += filenameLength;
-        const data = encryptedBytes.slice(offset);
+
+        const salt = encryptedBytes.slice(0, SALT_SIZE);
+        const iv = encryptedBytes.slice(SALT_SIZE, SALT_SIZE + IV_SIZE);
+        const data = encryptedBytes.slice(SALT_SIZE + IV_SIZE);
+
         const key = await getKeyFromPassword(password, salt);
-        const decryptedBuffer = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, data);
-        return { decryptedBuffer, originalFilename };
+        const decryptedBuffer = await window.crypto.subtle.decrypt({
+            name: 'AES-GCM',
+            iv: iv
+        }, key, data);
+        const decryptedBytes = new Uint8Array(decryptedBuffer);
+
+        const filenameLength = new DataView(decryptedBytes.buffer, 0, 2).getUint16(0, false);
+        const filenameBytes = decryptedBytes.slice(2, 2 + filenameLength);
+        const originalFilename = new TextDecoder().decode(filenameBytes);
+        const originalFileBuffer = decryptedBytes.slice(2 + filenameLength).buffer;
+
+        return {
+            decryptedBuffer: originalFileBuffer,
+            originalFilename
+        };
     }
+
 
     // --- UI Helper Functions ---
     function showLoading(message) {
         statusArea.innerHTML = `<div class="flex flex-col items-center justify-center"><div class="loader mb-2"></div><p>${message}</p></div>`;
     }
+
     function showSuccess(message) {
         statusArea.innerHTML = `<div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4" role="alert"><p class="font-bold">Success</p><p>${message}</p></div>`;
     }
+
     function showError(message) {
         statusArea.innerHTML = `<div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert"><p class="font-bold">Error</p><p>${message}</p></div>`;
     }
+
     function createDownloadLink(blob, fileName, label) {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = fileName;
-        link.textContent = `Download ${label} Again`;
-        link.className = 'block w-full text-center mt-2 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500';
+
+        // Auto-click to start download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Revoke the URL after a short delay
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+
+        // Optionally, display a "download again" button
         let container = document.getElementById('download-links');
         if (!container) {
             container = document.createElement('div');
@@ -216,90 +282,18 @@ document.addEventListener('DOMContentLoaded', () => {
             container.className = 'mt-4 space-y-2';
             statusArea.appendChild(container);
         }
-        container.innerHTML = '';
-        container.appendChild(link);
-        link.click();
+        const downloadAgainLink = document.createElement('a');
+        downloadAgainLink.href = url;
+        downloadAgainLink.download = fileName;
+        downloadAgainLink.textContent = `Download ${label} Again`;
+        downloadAgainLink.className = 'block w-full text-center mt-2 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500';
+
+        container.innerHTML = ''; // Clear previous link
+        container.appendChild(downloadAgainLink);
     }
+
     function clearStatus() {
         statusArea.innerHTML = '';
     }
 
-    // --- NEW: Dynamic Particle Background Logic ---
-    const canvas = document.getElementById('particle-canvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    class Particle {
-        constructor(x, y, size, speedX, speedY) {
-            this.x = x;
-            this.y = y;
-            this.size = size;
-            this.speedX = speedX;
-            this.speedY = speedY;
-        }
-        update() {
-            if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
-            if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
-            this.x += this.speedX;
-            this.y += this.speedY;
-        }
-        draw() {
-            ctx.fillStyle = 'rgba(0, 255, 255, 0.5)';
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-
-    function initParticles() {
-        particles = [];
-        const numberOfParticles = (canvas.width * canvas.height) / 9000;
-        for (let i = 0; i < numberOfParticles; i++) {
-            const size = Math.random() * 2 + 1;
-            const x = Math.random() * canvas.width;
-            const y = Math.random() * canvas.height;
-            const speedX = (Math.random() * 0.5 - 0.25);
-            const speedY = (Math.random() * 0.5 - 0.25);
-            particles.push(new Particle(x, y, size, speedX, speedY));
-        }
-    }
-
-    function connectParticles() {
-        for (let a = 0; a < particles.length; a++) {
-            for (let b = a; b < particles.length; b++) {
-                const dx = particles[a].x - particles[b].x;
-                const dy = particles[a].y - particles[b].y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                if (distance < 120) {
-                    ctx.strokeStyle = `rgba(0, 255, 255, ${1 - distance / 120})`;
-                    ctx.lineWidth = 0.5;
-                    ctx.beginPath();
-                    ctx.moveTo(particles[a].x, particles[a].y);
-                    ctx.lineTo(particles[b].x, particles[b].y);
-                    ctx.stroke();
-                }
-            }
-        }
-    }
-
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (const particle of particles) {
-            particle.update();
-            particle.draw();
-        }
-        connectParticles();
-        requestAnimationFrame(animate);
-    }
-
-    initParticles();
-    animate();
 });
