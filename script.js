@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const encryptFileName = document.getElementById('encrypt-file-name');
     const encryptBtn = document.getElementById('encrypt-btn');
     const encryptPasswordInput = document.getElementById('encrypt-password');
-    // MODIFICATION: Get the new password confirmation element
     const encryptPasswordConfirmInput = document.getElementById('encrypt-password-confirm');
     const decryptDropZone = document.getElementById('decrypt-drop-zone');
     const decryptFileInput = document.getElementById('decrypt-file-input');
@@ -20,6 +19,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let encryptFile = null;
     let decryptFile = null;
+
+    // --- NEW: Fun aliases for encrypted filenames ---
+    const funAliases = [
+        'IronMan', 'CaptainAmerica', 'Thor', 'Hulk', 'BlackWidow', 'Hawkeye',
+        'SpiderMan', 'Wolverine', 'Deadpool', 'WonderWoman', 'Superman', 'Batman',
+        'ScoobyDoo', 'Shaggy', 'Velma', 'Daphne', 'Fred', 'BugsBunny', 'DaffyDuck',
+        'Pikachu', 'Charizard', 'MickeyMouse', 'Goofy', 'DonaldDuck', 'OptimusPrime',
+        'BlackPanther', 'DoctorStrange', 'Groot', 'RocketRaccoon', 'Yoda', 'DarthVader'
+    ];
+
+    function getRandomAlias() {
+        const randomIndex = Math.floor(Math.random() * funAliases.length);
+        return funAliases[randomIndex];
+    }
 
     // --- Crypto Constants ---
     const SALT_SIZE = 16; // 128 bits
@@ -47,14 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function setupDropZone(zone, input, fileVarSetter, nameDisplay, buttonValidator) {
         zone.addEventListener('click', () => input.click());
-        zone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            zone.classList.add('dragover');
-        });
-        zone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            zone.classList.remove('dragover');
-        });
+        zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+        zone.addEventListener('dragleave', (e) => { e.preventDefault(); zone.classList.remove('dragover'); });
         zone.addEventListener('drop', (e) => {
             e.preventDefault();
             zone.classList.remove('dragover');
@@ -75,19 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    setupDropZone(encryptDropZone, encryptFileInput, (f) => {
-        encryptFile = f;
-    }, encryptFileName, validateEncryptButton);
-    setupDropZone(decryptDropZone, decryptFileInput, (f) => {
-        decryptFile = f;
-    }, decryptFileName, validateDecryptButton);
+    setupDropZone(encryptDropZone, encryptFileInput, (f) => { encryptFile = f; }, encryptFileName, validateEncryptButton);
+    setupDropZone(decryptDropZone, decryptFileInput, (f) => { decryptFile = f; }, decryptFileName, validateDecryptButton);
 
     encryptPasswordInput.addEventListener('input', validateEncryptButton);
-    // MODIFICATION: Add event listener to the confirmation input
     encryptPasswordConfirmInput.addEventListener('input', validateEncryptButton);
     decryptPasswordInput.addEventListener('input', validateDecryptButton);
 
-    // MODIFICATION: Update validation logic to check if passwords match
     function validateEncryptButton() {
         const passwordsMatch = encryptPasswordInput.value === encryptPasswordConfirmInput.value;
         encryptBtn.disabled = !(encryptFile && encryptPasswordInput.value.length > 0 && passwordsMatch);
@@ -107,15 +108,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         const password = encryptPasswordInput.value;
-        // MODIFICATION: Get confirmation password value
         const passwordConfirm = encryptPasswordConfirmInput.value;
 
         if (password.length < 8) {
             showError('Password must be at least 8 characters long.');
             return;
         }
-        
-        // MODIFICATION: Add explicit check for password match before encrypting
         if (password !== passwordConfirm) {
             showError('Passwords do not match. Please re-enter.');
             return;
@@ -127,9 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const fileBuffer = await encryptFile.arrayBuffer();
             const encryptedBlob = await encryptWithPassword(fileBuffer, password, encryptFile.name);
             showSuccess('File encrypted successfully! Your download should begin automatically.');
-
-            const originalName = encryptFile.name;
-            const encryptedFilename = originalName + '.encrypted';
+            
+            // NEW: Use a fun alias for the filename
+            const encryptedFilename = getRandomAlias() + '.encrypted';
 
             createDownloadLink(encryptedBlob, encryptedFilename, 'Encrypted File');
         } catch (error) {
@@ -153,13 +151,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const encryptedBuffer = await decryptFile.arrayBuffer();
-            const {
-                decryptedBuffer,
-                originalFilename
-            } = await decryptWithPassword(encryptedBuffer, password);
+            const { decryptedBuffer, originalFilename } = await decryptWithPassword(encryptedBuffer, password);
 
             const decryptedBlob = new Blob([decryptedBuffer]);
             showSuccess('File decrypted successfully! Your download should begin automatically.');
+            // The original filename is restored automatically from the encrypted payload
             createDownloadLink(decryptedBlob, originalFilename, 'Decrypted File');
 
         } catch (error) {
@@ -171,18 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Cryptographic Functions ---
     async function getKeyFromPassword(password, salt) {
         const enc = new TextEncoder();
-        const keyMaterial = await window.crypto.subtle.importKey('raw', enc.encode(password), {
-            name: 'PBKDF2'
-        }, false, ['deriveKey']);
+        const keyMaterial = await window.crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']);
         return window.crypto.subtle.deriveKey({
             name: 'PBKDF2',
             salt: salt,
             iterations: PBKDF2_ITERATIONS,
             hash: 'SHA-256'
-        }, keyMaterial, {
-            name: 'AES-GCM',
-            length: 256
-        }, true, ['encrypt', 'decrypt']);
+        }, keyMaterial, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
     }
 
     /**
@@ -205,10 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         plaintext.set(filenameBytes, 2);
         plaintext.set(new Uint8Array(data), 2 + filenameBytes.length);
 
-        const encryptedContent = await window.crypto.subtle.encrypt({
-            name: 'AES-GCM',
-            iv: iv
-        }, key, plaintext);
+        const encryptedContent = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, plaintext);
 
         const result = new Uint8Array(SALT_SIZE + IV_SIZE + encryptedContent.byteLength);
         result.set(salt, 0);
@@ -229,10 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = encryptedBytes.slice(SALT_SIZE + IV_SIZE);
 
         const key = await getKeyFromPassword(password, salt);
-        const decryptedBuffer = await window.crypto.subtle.decrypt({
-            name: 'AES-GCM',
-            iv: iv
-        }, key, data);
+        const decryptedBuffer = await window.crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, data);
         const decryptedBytes = new Uint8Array(decryptedBuffer);
 
         const filenameLength = new DataView(decryptedBytes.buffer, 0, 2).getUint16(0, false);
@@ -240,12 +225,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const originalFilename = new TextDecoder().decode(filenameBytes);
         const originalFileBuffer = decryptedBytes.slice(2 + filenameLength).buffer;
 
-        return {
-            decryptedBuffer: originalFileBuffer,
-            originalFilename
-        };
+        return { decryptedBuffer, originalFilename };
     }
-
 
     // --- UI Helper Functions ---
     function showLoading(message) {
@@ -266,15 +247,12 @@ document.addEventListener('DOMContentLoaded', () => {
         link.href = url;
         link.download = fileName;
 
-        // Auto-click to start download
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        // Revoke the URL after a short delay
         setTimeout(() => URL.revokeObjectURL(url), 100);
 
-        // Optionally, display a "download again" button
         let container = document.getElementById('download-links');
         if (!container) {
             container = document.createElement('div');
@@ -288,12 +266,11 @@ document.addEventListener('DOMContentLoaded', () => {
         downloadAgainLink.textContent = `Download ${label} Again`;
         downloadAgainLink.className = 'block w-full text-center mt-2 bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500';
 
-        container.innerHTML = ''; // Clear previous link
+        container.innerHTML = ''; 
         container.appendChild(downloadAgainLink);
     }
 
     function clearStatus() {
         statusArea.innerHTML = '';
     }
-
 });
